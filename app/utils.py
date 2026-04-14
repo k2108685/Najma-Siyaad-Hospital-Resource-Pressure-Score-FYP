@@ -2,8 +2,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-DATA_FILE = Path(__file__).parent.parent / "data/processed/ae_pressure_with_score.csv"
-
+DATA_FILE = Path(__file__).resolve().parent / "data" / "processed" / "ae_pressure_with_score.csv"
 
 @st.cache_data
 def get_data():
