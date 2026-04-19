@@ -1,99 +1,125 @@
 from pathlib import Path
 import matplotlib.pyplot as plt
 import streamlit as st
-from utils import get_data, display_labels, format_value, show_pressure, show_footer
+
+from utils import get_data, show_pressure, display_labels, format_value, show_footer
 from colourtheme import apply_styles
 
-st.set_page_config(page_title="HRPS Dashboard", layout="wide")
 
+st.set_page_config(page_title="Dashboard", layout="wide")
 apply_styles()
 
-LOGO = Path(__file__).parent.parent / "logo" / "nhs_logo.png"
 
-nav_cols = st.columns([1.2, 1, 1, 1, 1.2])
+BASE_DIR = Path(__file__).resolve().parent.parent
+LOGO_PATH = BASE_DIR / "logo" / "nhs_logo.png"
 
-with nav_cols[0]:
-    if LOGO.exists():
-        st.image(str(LOGO), width=90)
+
+# Top navigation
+col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+
+with col1:
+    if LOGO_PATH.exists():
+        st.image(str(LOGO_PATH), width=100)
     else:
         st.markdown('<div class="custom-logo">NHS</div>', unsafe_allow_html=True)
 
-with nav_cols[1]:
-    st.page_link("home.py", label="Home", use_container_width=True)
+with col2:
+    st.page_link("home.py", label="Home")
 
-with nav_cols[2]:
-    st.page_link("pages/dashboard.py", label="Dashboard", use_container_width=True)
+with col3:
+    st.page_link("pages/dashboard.py", label="Dashboard")
 
-with nav_cols[3]:
-    st.page_link("pages/monthly_filter.py", label="Check by Month", use_container_width=True)
+with col4:
+    st.page_link("pages/monthly_filter.py", label="Check by Month")
 
-with nav_cols[4]:
-    st.page_link("pages/forecast.py", label="Forecast", use_container_width=True)
+with col5:
+    st.page_link("pages/forecast.py", label="Forecast")
+
 
 st.markdown("---")
-
 st.title("HRPS Dashboard")
 
+#load data and get lastest data 
 df = get_data()
 latest = df.iloc[-1]
-score = float(latest["Pressure Score"])
-previous = float(df.iloc[-2]["Pressure Score"]) if len(df) > 1 else score
+current_score = float(latest["Pressure Score"])
+previous_score = float(df.iloc[-2]["Pressure Score"]) if len(df) > 1 else current_score
 
-col1, col2, col3 = st.columns(3)
-col1.metric("Current Pressure Score", f"{score:.2f}")
-col2.metric("Current Period", latest["Period"].strftime("%b %Y"))
-col3.metric("Previous Period Score", f"{previous:.2f}")
+colA, colB, colC = st.columns(3)
+colA.metric("Current Pressure", f"{current_score:.2f}")
+colB.metric("Current Period", latest["Period"].strftime("%b %Y"))
+colC.metric("Previous Pressure", f"{previous_score:.2f}")
 
-show_pressure(score)
+show_pressure(current_score)
 
 st.subheader("Pressure Score Over Time")
+#plot the score over time on graph
+
 fig, ax = plt.subplots(figsize=(10, 4))
-ax.plot(df["Period"], df["Pressure Score"], marker="o", linewidth=2)
-ax.axhline(0.75, linestyle="--", alpha=0.7, label="Critical")
-ax.axhline(0.55, linestyle="--", alpha=0.7, label="High")
+ax.plot(df["Period"], df["Pressure Score"], marker="o", linewidth=1.5)
+ax.axhline(0.75, linestyle="--", linewidth=1, label="Critical")
+ax.axhline(0.55, linestyle="--", linewidth=1, label="High")
 ax.set_ylim(0, 1)
 ax.set_xlabel("Month")
 ax.set_ylabel("Pressure Score")
-ax.set_facecolor("white")
+ax.set_facecolor("#f5f7fb")
 fig.patch.set_facecolor("#f5f7fb")
 ax.legend()
 plt.xticks(rotation=45)
 plt.tight_layout()
 st.pyplot(fig)
 
-indicators = [
-    c for c in [
-        "Total Attendances",
-        "Total Emergency Admissions",
-        "Patients Waiting Over 4 Hours for Admission",
-        "Percentage of Patients Seen Within 4 Hours",
-        "Occupancy Rate"
-    ]
-    if c in df.columns
+indicator_columns = [
+    "Total Attendances",
+    "Total Emergency Admissions",
+    "Patients Waiting Over 4 Hours for Admission",
+    "Percentage of Patients Seen Within 4 Hours",
+    "Occupancy Rate"
 ]
 
-if indicators:
-    tab1, tab2 = st.tabs(["Trends", "Latest"])
+indicator_columns = [col for col in indicator_columns if col in df.columns]
+
+#individual graphs for each indicator
+if indicator_columns:
+    tab1, tab2, tab3 = st.tabs(["Combined Trends", "Individual Graphs", "Latest"])
 
     with tab1:
-        fig2, ax2 = plt.subplots(figsize=(10, 5))
-        for column in indicators:
-            ax2.plot(df["Period"], df[column], marker="o", linewidth=2, label=display_labels(column))
-        ax2.set_xlabel("Month")
-        ax2.set_ylabel("Value")
-        ax2.set_title("Underlying Indicators")
-        ax2.set_facecolor("white")
-        fig2.patch.set_facecolor("#f5f7fb")
-        ax2.legend()
+        fig, ax = plt.subplots(figsize=(10, 4))
+
+        for col in indicator_columns:
+            ax.plot(df["Period"], df[col], marker="o", linewidth=1.5, label=display_labels(col))
+
+        ax.set_title("Indicator Trends Over Time")
+        ax.set_xlabel("Month")
+        ax.set_ylabel("Value")
+        ax.set_facecolor("#f5f7fb")
+        fig.patch.set_facecolor("#f5f7fb")
+    
+        ax.legend()
         plt.xticks(rotation=45)
         plt.tight_layout()
-        st.pyplot(fig2)
+        st.pyplot(fig)
 
     with tab2:
-        st.dataframe(
-            [{"Indicator": display_labels(column), "Latest": format_value(column, latest[column])} for column in indicators],
-            hide_index=True,
-            use_container_width=True
-        )
+        for col in indicator_columns:
+            st.markdown(f"### {display_labels(col)}")
+
+            fig, ax = plt.subplots(figsize=(10, 3.5))
+            ax.plot(df["Period"], df[col], marker="o", linewidth=1.5)
+            ax.set_title(display_labels(col))
+            ax.set_xlabel("Month")
+            ax.set_ylabel(display_labels(col))
+            ax.set_facecolor("#f5f7fb")
+            fig.patch.set_facecolor("#f5f7fb")
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+            st.pyplot(fig)
+
+    with tab3:
+        latest_table = {
+            "Indicator": [display_labels(col) for col in indicator_columns],
+            "Latest Value": [format_value(col, latest[col]) for col in indicator_columns]
+        }
+        st.table(latest_table)
 
 show_footer("Data: NHS England")

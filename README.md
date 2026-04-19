@@ -6,9 +6,14 @@ What it does
 
 The HRPS takes the following data from the NHS each month: A&E attendances, emergency admissions, patients waiting over 4 hours to be admitted for emergency care, the percentage of hospitals meeting the 4-hour admission target for emergency patients, and the percentage of hospital beds occupied (available from December 2020).
 
+How to run 
+
 - Python 3.10 or higher
 - pip
 
+## Installation
 
 ```bash
 pip install -r requirements.txt
+python app/preparedata.py
+streamlit run app/home.py

@@ -13,90 +13,54 @@ apply_styles()
 
 LOGO = Path(__file__).parent / "logo" / "nhs_logo.png"
 
-nav_cols = st.columns([1.2, 1, 1, 1, 1.2])
+#navigation bar 
 
-with nav_cols[0]:
+nav1, nav2, nav3, nav4, nav5 = st.columns([1.2, 1, 1, 1, 1.2])
+
+with nav1:
     if LOGO.exists():
         st.image(str(LOGO), width=90)
     else:
         st.markdown('<div class="custom-logo">NHS</div>', unsafe_allow_html=True)
 
-with nav_cols[1]:
-    st.page_link("home.py", label="Home", use_container_width=True)
-
-with nav_cols[2]:
-    st.page_link("pages/dashboard.py", label="Dashboard", use_container_width=True)
-
-with nav_cols[3]:
-    st.page_link("pages/monthly_filter.py", label="Check by Month", use_container_width=True)
-
-with nav_cols[4]:
-    st.page_link("pages/forecast.py", label="Forecast", use_container_width=True)
+with nav2:
+    st.page_link("home.py", label="Home", width="stretch")
+with nav3:
+    st.page_link("pages/dashboard.py", label="Dashboard", width="stretch")
+with nav4:
+    st.page_link("pages/monthly_filter.py", label="Check by Month", width="stretch")
+with nav5:
+    st.page_link("pages/forecast.py", label="Forecast", width="stretch")
 
 st.markdown("---")
 
 st.title("Hospital Resource Pressure System")
-st.write("One score: 0–100%. Higher values mean more pressure.")
-
-st.markdown("## Pressure Level Guide")
-
-st.markdown(
-"""
-<div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
-
-<div style="
-background:#2e7d32;
-color:white;
-padding:10px 16px;
-border-radius:20px;
-font-weight:600;
-font-size:14px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-">
-Low 0–34%
-</div>
-
-<div style="
-background:#f9a825;
-color:black;
-padding:10px 16px;
-border-radius:20px;
-font-weight:600;
-font-size:14px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-">
-Moderate 35–54%
-</div>
-
-<div style="
-background:#ef6c00;
-color:white;
-padding:10px 16px;
-border-radius:20px;
-font-weight:600;
-font-size:14px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-">
-High 55–74%
-</div>
-
-<div style="
-background:#c62828;
-color:white;
-padding:10px 16px;
-border-radius:20px;
-font-weight:600;
-font-size:14px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-">
-Critical 75–100%
-</div>
-
-</div>
-""",
-unsafe_allow_html=True
+st.write(
+    "This system brings together key hospital performance indicators into one pressure score. "
+    "It helps show current pressure levels, reviews past data monthly , and estimates future trends."
 )
 
+st.markdown("## Pressure Level Guide")
+st.markdown(
+"""
+<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+<div style="background:#2e7d32; color:white; padding:10px 14px; border-radius:8px; font-weight:600;">
+Low: 0% - 34%
+</div>
+<div style="background:#f9a825; color:black; padding:10px 14px; border-radius:8px; font-weight:600;">
+Moderate: 35% - 54%
+</div>
+<div style="background:#ef6c00; color:white; padding:10px 14px; border-radius:8px; font-weight:600;">
+High: 55% - 74%
+</div>
+<div style="background:#c62828; color:white; padding:10px 14px; border-radius:8px; font-weight:600;">
+Critical: 75% - 100%
+</div>
+</div>
+""",
+unsafe_allow_html=True,
+)
+#load the data and show lastest
 try:
     df = get_data()
     latest = df.iloc[-1]
@@ -114,5 +78,43 @@ except FileNotFoundError:
     st.info("Run preparedata.py first.")
 except Exception as error:
     st.error(f"Could not load data: {error}")
+
+st.markdown("## Pages")
+
+card1, card2, card3 = st.columns(3)
+
+with card1:
+    st.markdown("### Dashboard")
+    st.write(
+        "View the overall pressure score and key trends across the full dataset. "
+        "This page shows the main pressure score graph and the underlying indicators over time."
+    )
+    st.page_link("pages/dashboard.py", label="Open Dashboard", width="stretch")
+
+with card2:
+    st.markdown("### Check Date By Months")
+    st.write(
+        "Select a specific month to review its pressure score, see the main indicator values, "
+        "and compare that month with the previous ones."
+    )
+    st.page_link("pages/monthly_filter.py", label="Open Check by Month", width="stretch")
+
+with card3:
+    st.markdown("### Forecast")
+    st.write(
+        "Predict future hospital pressure levels using the past pressure score trend. "
+        "This page shows a forecast table, graph, and short explantion."
+    )
+    st.page_link("pages/forecast.py", label="Open Forecast", width="stretch")
+
+st.markdown("## Purpose")
+
+st.write("""
+The HRPS is designed to make hospital pressure easier for people to understand by
+providing a single score that combines all of the different indicators of hospital
+pressure. This allows for people to  easily compare hospital pressure across
+different time periods, as well as to help people to estimate the pressure
+that hospitals may experience in the future.
+""")
 
 show_footer("NHS England open data")
